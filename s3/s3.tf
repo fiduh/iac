@@ -1,69 +1,52 @@
-
+# Configure the AWS Provider
 provider "aws"{
-  # Configuration options
+  region = "us-east-1"
 }
 
 
-data "aws_caller_identity" "current" {}
+#data "aws_caller_identity" "current" {}
 
-# S3 Bucket
+# Create the S3 Bucket
 resource "aws_s3_bucket" "this" {
   bucket = "s3-tofu-logs-bucket"
-
-  tags = {
-    Name        = "s3-tofu"
-  }
 }
 
-resource "aws_s3_bucket_ownership_controls" "example" {
-  bucket = aws_s3_bucket.my_bucket.id
+# Set S3 Bucket Ownership Controls
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.this.id
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
 }
 
+# Configure Public Access Block Settings
+resource "aws_s3_bucket_public_access_block" "this" {
+  bucket = aws_s3_bucket.this.id
 
-# Resourse Policy - Datasource
-data "aws_iam_policy_document" "cloudtrail_policy" {
-  statement {
-    effect = "Allow"
-
-    actions = ["s3:PutObject"]
-
-    resources = ["${aws_s3_bucket.this.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
-    }
-  }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:GetBucketAcl",
-      "s3:ListBucket"
-    ]
-
-    resources = ["${aws_s3_bucket.this.arn}"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
-    }
-  }
+  block_public_acls       = false # Allows public ACLs
+  block_public_policy     = false # Allows public bucket policies
+  ignore_public_acls      = false # Does not ignore public ACLs
+  restrict_public_buckets = false # Does not restrict public buckets
 }
 
 
-# Resource Policy
-resource "aws_s3_bucket_policy" "cloudtrail_policy" {
+# Create the Bucket Policy Document using a Data Source
+data "aws_iam_policy_document" "allow_public_access" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:GetObject"]
+
+    resources = ["${aws_s3_bucket.this.arn}/*"] # Grants public access to all objects within the bucket
+  }
+}
+
+# Attach the Policy to the S3 Bucket
+resource "aws_s3_bucket_policy" "allow_public_access" {
   bucket = aws_s3_bucket.this.id
-  policy = data.aws_iam_policy_document.cloudtrail_policy.json
+  policy = data.aws_iam_policy_document.allow_public_access.json
 }
