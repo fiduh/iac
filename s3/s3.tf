@@ -1,8 +1,25 @@
+
+provider "aws"{
+  # Configuration options
+}
+
+
 data "aws_caller_identity" "current" {}
 
 # S3 Bucket
 resource "aws_s3_bucket" "this" {
   bucket = "s3-tofu-logs-bucket"
+
+  tags = {
+    Name        = "s3-tofu"
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "example" {
+  bucket = aws_s3_bucket.my_bucket.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
 }
 
 
