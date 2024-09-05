@@ -1,13 +1,15 @@
 name:  Terraform Workflow   					#workflow
-on: push 							            #event
-jobs: 
+on: push 	
+						            #event
+jobs:
+
 	unit-testing:
-		name: Terraform Unit Test
 		runs-on: ubuntu-latest		 #Runner
 		steps:
 			- name: Validate
-			  run: echo terraform validate
+			  run: echo "terraform validate"
 			- name: Format
-			  run: echo terraform fmt
+			  run: "echo terraform fmt"
 			- name: Plan
-			  run: echo terraform plan
+			  run: "echo terraform plan"
+
