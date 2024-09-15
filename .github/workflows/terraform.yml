@@ -21,7 +21,7 @@ jobs:
       run: aws sts get-caller-identity
 
     - name: Setup Terraform
-      uses: hasicorp/setup-terraform@v3
+      uses: hashicorp/setup-terraform@v3
 
     - name: Format
       id: fmt
