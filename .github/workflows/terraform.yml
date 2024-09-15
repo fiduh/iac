@@ -18,7 +18,9 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Test AWS Connection
-      run: aws sts get-caller-identity
+      run: |
+        ls -a
+        aws sts get-caller-identity
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
