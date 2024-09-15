@@ -3,7 +3,7 @@ on: [push]  #event
 
 permissions:
   id-token: write # required for requesting the JWT 
-  
+
 jobs:
   deploy-iac:
     runs-on: ubuntu-latest		 #Runner
@@ -17,7 +17,7 @@ jobs:
         role-to-assume: arn:aws:iam::426991683772:role/github-action-oidc
         aws-region: us-east-1
 
-    - name: Test repo
+    - name: Test AWS Connection
       run: aws sts get-caller-identity
 
     - name: Validate
