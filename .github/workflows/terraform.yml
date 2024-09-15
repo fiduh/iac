@@ -14,18 +14,31 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        role-to-assume: arn:aws:iam::426991683772:role/github-action-oidc
-        aws-region: us-east-1
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Test AWS Connection
       run: aws sts get-caller-identity
 
-    - name: Validate
-      run: echo "terraform validate"
+    - name: Setup Terraform
+      uses: hasicorp/setup-terraform@v3
 
     - name: Format
+      id: fmt
       run: "echo terraform fmt"
+      continue-on-error: true
+
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    - name: Validate
+      id: validate
+      run: terraform validate -no-color
+
 
     - name: Plan
-      run: "echo terraform plan"
+      id: plan
+      run: terraform plan -no-color
+      continue-on-error: true
 
