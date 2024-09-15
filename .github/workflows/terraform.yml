@@ -1,9 +1,9 @@
 name:  Terraform Workflow   					#workflow
-on: [push] 
+on: [push]  #event
 
 permissions:
-  id-token: write # required for requesting the JWT
-  							            #event
+  id-token: write # required for requesting the JWT 
+  
 jobs:
   deploy-iac:
     runs-on: ubuntu-latest		 #Runner
