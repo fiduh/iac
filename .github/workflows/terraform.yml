@@ -25,24 +25,48 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
+    - name: Find Changed Directories
+      id: find-changes
+      run: |
+          # Get the list of modified directories (filter by environment/*)
+          changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'environment/' | cut -d'/' -f1-3 | sort -u)
+          echo "Changed directories: $changed_dirs"
+
+          # If no changed directories, exit the job
+          if [ -z "$changed_dirs" ]; then
+            echo "No relevant changes detected. Skipping Terraform plan."
+            exit 0
+          fi
+
+          # Pass the list of changed directories to the next step
+          echo "::set-output name=dirs::$changed_dirs"
+
     - name: Format
       id: fmt
       run: terraform fmt -check
       continue-on-error: true
 
-    - name: Terraform Init
-      id: init
-      run: terraform init
+    - name: Run Terraform Plan
+      if: steps.find-changes.outputs.dirs != ''
+      run: |
+          # Loop over each changed directory and run terraform plan
+          for dir in ${{ steps.find-changes.outputs.dirs }}; do
+            echo "Running terraform plan in $dir"
+            cd $dir
+            terraform init
+            terraform plan
+            cd - # Go back to the root directory after each plan
+          done
 
-    - name: Validate
-      id: validate
-      run: terraform validate -no-color
+    #- name: Validate
+      #id: validate
+      #run: terraform validate -no-color
 
 
-    - name: Plan
-      id: plan
-      run: terraform plan -no-color
-      continue-on-error: true
+    #- name: Plan
+      #id: plan
+      #run: terraform plan -no-color
+      #continue-on-error: true
 
 
 
