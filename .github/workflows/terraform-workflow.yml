@@ -41,10 +41,6 @@ jobs:
           # Pass the list of changed directories to the next step
           echo "::set-output name=dirs::$changed_dirs"
 
-    - name: Format
-      id: fmt
-      run: terraform fmt -check
-      continue-on-error: true
 
     - name: Run Terraform Plan
       if: steps.find-changes.outputs.dirs != ''
