@@ -15,7 +15,7 @@ terraform {
   backend "s3" {
     bucket = "brains-backend"
     region = "us-east-1"
-    key    = "environment/staging/ec2/terraform.tfstate"
+    key    = "environments/staging/ec2/terraform.tfstate"
     dynamodb_table = "dynamodb_lock"
     encrypt        = true
   }
@@ -35,7 +35,7 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical #more changes he
+  owners = ["099720109477"] # Canonical #more changes here
 }
 
 resource "aws_instance" "web" {
