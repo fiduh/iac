@@ -62,7 +62,8 @@ jobs:
     - name: Run Terraform Plan
       run: |
           changes_dirs=${{ steps.filter.outputs.environments }}
-          echo "Changed directories: $changed_dirs"
+          changes_dirs2=${{ fromJSON(steps.filter.outputs.environments) }}
+          echo "Changed directories: $changed_dirs2"
           # Loop over each changed directory and run terraform plan
           for dir in $changed_dirs; do
             echo "Running terraform plan in $dir"
