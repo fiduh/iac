@@ -30,9 +30,6 @@ jobs:
         ls -a
         aws sts get-caller-identity
 
-    - name: backend tests
-      if: steps.filter.outputs.environments == 'true'
-      run: echo "Executing environments tests..."
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -47,7 +44,7 @@ jobs:
           #changed_dirs=$(git diff --name-only origin/main ${{ github.sha }} -- '*.tf' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
 
           #echo $changed_dirs
-          #echo "Changed directories: $changed_dirs"
+          echo "Changed directories: $changed_dirs"
 
           # If no changed directories, exit the job
           #if [ -z "$changed_dirs" ]; then
@@ -61,8 +58,7 @@ jobs:
 
     - name: Run Terraform Plan
       run: |
-          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u) 
-          changes_dirs2=${{ fromJSON(steps.filter.outputs.environments) }}
+          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
           echo "Changed directories: $changed_dirs"
           # Loop over each changed directory and run terraform plan
           for dir in $changed_dirs; do
@@ -73,15 +69,6 @@ jobs:
             cd - # Go back to the root directory after each plan
           done
 
-    #- name: Validate
-      #id: validate
-      #run: terraform validate -no-color
-
-
-    #- name: Plan
-      #id: plan
-      #run: terraform plan -no-color
-      #continue-on-error: true
 
 
 
