@@ -29,7 +29,9 @@ jobs:
       id: find-changes
       run: |
           # Find changed .tf files and extract the directories containing the changes
-          changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          #changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          changed_dirs=$(git diff --name-only HEAD~1 HEAD --diff-filter=d | grep -E '\.tf$' | xargs -I{} dirname {} | sort -u)
+
           echo "Changed directories: $changed_dirs"
 
           # If no changed directories, exit the job
