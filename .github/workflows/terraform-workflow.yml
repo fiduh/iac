@@ -43,7 +43,7 @@ jobs:
       id: find-changes
       run: |
           # Find changed .tf files and extract the directories containing the changes
-          #changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
           #changed_dirs=$(git diff --name-only origin/main ${{ github.sha }} -- '*.tf' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
 
           #echo $changed_dirs
@@ -61,9 +61,9 @@ jobs:
 
     - name: Run Terraform Plan
       run: |
-          changes_dirs=${{ steps.filter.outputs.environments }}
+          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u) 
           changes_dirs2=${{ fromJSON(steps.filter.outputs.environments) }}
-          echo "Changed directories: $changed_dirs2"
+          echo "Changed directories: $changed_dirs"
           # Loop over each changed directory and run terraform plan
           for dir in $changed_dirs; do
             echo "Running terraform plan in $dir"
