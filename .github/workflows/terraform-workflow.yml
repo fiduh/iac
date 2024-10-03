@@ -60,7 +60,6 @@ jobs:
 
 
     - name: Run Terraform Plan
-      if: steps.find-changes.outputs.dirs != ''
       run: |
           changes_dirs=${{ steps.filter.outputs.environments }}
           echo "Changed directories: $changed_dirs"
