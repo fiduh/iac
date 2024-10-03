@@ -11,6 +11,14 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
     
+    - name: Detect Changes
+      uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          environments:
+            - 'environments/**'
+    
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -22,8 +30,24 @@ jobs:
         ls -a
         aws sts get-caller-identity
 
+    - name: backend tests
+      if: steps.filter.outputs.environments == 'true'
+      run: echo "Executing environments tests..."
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+    
+    - name: Ensure Git history
+      run: |
+          # Ensure that we have a complete history and can perform git diff reliably
+          git fetch --prune --unshallow || true
+          git fetch origin main:refs/remotes/origin/main  # Fetch main branch
+
+    - name: Debug Git Log
+      run: |
+          echo "Git Log"
+          git log --oneline -5
+
 
     - name: Find Changed Directories
       id: find-changes
