@@ -30,9 +30,6 @@ jobs:
         ls -a
         aws sts get-caller-identity
 
-    - name: backend tests
-      if: steps.filter.outputs.environments == 'true'
-      run: echo "Executing environments tests..."
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3

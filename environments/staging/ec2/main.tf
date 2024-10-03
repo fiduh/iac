@@ -5,7 +5,7 @@ provider "aws" {
 
 
 terraform {
-  required_version = "1.4.2"
+  required_version = "1.9.7"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -35,7 +35,7 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical #more changes here
+  owners = ["099720109477"] # Canonical #more changes he
 }
 
 resource "aws_instance" "web" {
