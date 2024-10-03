@@ -11,6 +11,13 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
     
+    - name: Detect Changes
+      uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          environments:
+            - 'environments/**'
     
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
@@ -23,24 +30,30 @@ jobs:
         ls -a
         aws sts get-caller-identity
 
+    - name: backend tests
+      if: steps.filter.outputs.environments == 'true'
+      run: echo "Executing environments tests..."
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
     
+
 
     - name: Find Changed Directories
       id: find-changes
       run: |
           # Find changed .tf files and extract the directories containing the changes
           changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          #changed_dirs=$(git diff --name-only origin/main ${{ github.sha }} -- '*.tf' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
 
-          echo "Changed directories: $changed_dirs"
+          #echo $changed_dirs
+          #echo "Changed directories: $changed_dirs"
 
           # If no changed directories, exit the job
-          if [ -z "$changed_dirs" ]; then
-            echo "No relevant changes detected. Skipping Terraform plan."
-            exit 0
-          fi
+          #if [ -z "$changed_dirs" ]; then
+            #echo "No relevant changes detected. Skipping Terraform plan."
+            #exit 0
+          #fi
 
           # Pass the list of changed directories to the next step
           #echo "::set-output name=dirs::$changed_dirs"
@@ -49,6 +62,7 @@ jobs:
     - name: Run Terraform Plan
       run: |
           changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u) 
+          changes_dirs2=${{ fromJSON(steps.filter.outputs.environments) }}
           echo "Changed directories: $changed_dirs"
           # Loop over each changed directory and run terraform plan
           for dir in $changed_dirs; do
@@ -58,6 +72,16 @@ jobs:
             terraform plan
             cd - # Go back to the root directory after each plan
           done
+
+    #- name: Validate
+      #id: validate
+      #run: terraform validate -no-color
+
+
+    #- name: Plan
+      #id: plan
+      #run: terraform plan -no-color
+      #continue-on-error: true
 
 
 
