@@ -4,6 +4,7 @@ provider "aws" {
 
 locals {
   lambda_arn = "arn:aws:lambda:us-east-1:426991683772:function:demoNodeJS"
+  region = "us-east-1"
 }
 
 
