@@ -22,6 +22,7 @@ module "api_gateway" {
     allow_origins = ["*"]
   }
 
+  domain_name: ""
 
 
 
