@@ -22,8 +22,6 @@ module "api_gateway" {
     allow_origins = ["*"]
   }
 
-  # Custom domain
-  domain_name = "terraform-aws-modules.modules.tf"
 
 
 
