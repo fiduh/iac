@@ -2,7 +2,7 @@ name:  Docker Image Workflow   					#workflow
 on:       #event
   push
   pull_request
-  workflow_dispatch  
+  workflow_dispatch  #Allow you to run this workflow manually from the actions tab.
 
 permissions:
   id-token: write # required for requesting the JWT 
