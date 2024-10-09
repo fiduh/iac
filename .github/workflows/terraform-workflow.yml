@@ -73,6 +73,7 @@ jobs:
 
 
   deploy-iac:
+    needs: [test-iac]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repo
@@ -96,5 +97,15 @@ jobs:
           environments/**/.terraform.lock.hcl
 
     - name: Run Terraform Apply
-      run: echo "Terraform apply"
+      env:
+        ALL_CHANGED_FOLDERS: ${{ needs.changed-files.outputs.all_changed_files }}
+      run: |
+          echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
+          # Loop over each changed directory and run terraform plan
+          for dir in ${ALL_CHANGED_FOLDERS}; do
+            echo "Running terraform plan in $dir"
+            cd $dir
+            terraform apply -input=false tfplan
+            cd - # Go back to the root directory after each plan
+          done
 
