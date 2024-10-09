@@ -9,6 +9,8 @@ permissions:
 
 jobs:
   test-iac:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == "push" }}
+    if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest		 #Runner
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
@@ -77,6 +79,7 @@ jobs:
 
 
   deploy-iac:
+    if: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || 'value_for_other_branches' }}
     needs: [test-iac]
     runs-on: ubuntu-latest
     steps:
