@@ -24,15 +24,6 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    
-    - name: Detect Changes
-      uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          environments:
-            - 'environments/**'
-
 
     - name: Run changed-files with dir_names
       id: changed-files
@@ -43,33 +34,23 @@ jobs:
             environments/**.tf
         dir_names: true
 
-    - name: List all changed files
+    - name: List all changed folders
+      # Find changed .tf files and extract the directories containing the changes
       env:
-        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-        for file in ${ALL_CHANGED_FILES}; do
+      #If no changed directories, exit the job
+        if [ -z "$ALL_CHANGED_FOLDERS" ]; then
+          echo "No relevant changes detected. Skipping Terraform plan."
+          exit 0
+        fi
+
+        #Pass the list of changed directories to the next step
+        echo "::set-output name=dirs::$changed_dirs"
+
+        for file in ${ALL_CHANGED_FOLDERS}; do
           echo "$file was changed"
         done
-
-
-    - name: Find Changed Directories
-      id: find-changes
-      run: |
-          # Find changed .tf files and extract the directories containing the changes
-          #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          #changed_dirs=$(git diff --name-only origin/main ${{ github.sha }} -- '*.tf' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-
-          #echo $changed_dirs
-          echo "Changed directories: $CHANGED_FOLDERS"
-
-          # If no changed directories, exit the job
-          #if [ -z "$changed_dirs" ]; then
-            #echo "No relevant changes detected. Skipping Terraform plan."
-            #exit 0
-          #fi
-
-          # Pass the list of changed directories to the next step
-          #echo "::set-output name=dirs::$changed_dirs"
 
 
     - name: Run Terraform Plan
@@ -77,7 +58,7 @@ jobs:
         ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
           #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
+          echo "Changed directories: ${dirs}"
           # Loop over each changed directory and run terraform plan
           for dir in ${ALL_CHANGED_FOLDERS}; do
             echo "Running terraform plan in $dir"
