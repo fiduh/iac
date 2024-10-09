@@ -3,6 +3,7 @@ on: [push]  #event
 
 permissions:
   id-token: write # required for requesting the JWT 
+  pull-requests: read
 
 env:
   CHANGED_FOLDERS: $(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
@@ -37,11 +38,11 @@ jobs:
       id: changed-files
       uses: tj-actions/changed-files@v45
         with:
-          dir_names: "true"
+          dir_names: true
 
     - name: List all changed files
       env:
-        ALL_CHANGED_FILES: ${{ $(steps.changed-files.outputs.all_changed_files) }}
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
         for file in ${ALL_CHANGED_FILES}; do
           echo "$file was changed"
