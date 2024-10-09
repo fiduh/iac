@@ -70,11 +70,13 @@ jobs:
 
 
     - name: Run Terraform Plan
+      env:
+        ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          echo "Changed directories: $changed_dirs"
+          #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          echo "Changed directories: $ALL_CHANGED_FOLDERS"
           # Loop over each changed directory and run terraform plan
-          for dir in $changed_dirs; do
+          for dir in ${ALL_CHANGED_FOLDERS}; do
             echo "Running terraform plan in $dir"
             cd $dir
             terraform init
