@@ -4,7 +4,7 @@ on: [push]  #event
 permissions:
   id-token: write # required for requesting the JWT 
   pull-requests: read
-  contents: read|write
+  contents: read
 
 
 jobs:
