@@ -72,6 +72,7 @@ jobs:
         include-hidden-files: true
         path: |
           environments/**/tfplan
+          environments/**/.terraform
           environments/**/.terraform.lock.hcl
             
 
@@ -112,7 +113,6 @@ jobs:
         ls -R
         echo "Folder Structure--------------------------------------------------------------"
         ls -LR
-        chmod -R +x .terraform/providers/registry.terraform.io/hashicorp/aws/
 
     - name: Run Terraform Apply
       env:
@@ -123,7 +123,7 @@ jobs:
           for dir in ${ALL_CHANGED_FOLDERS}; do
             echo "Running terraform apply in $dir"
             cd $dir
-            terraform init -lockfile=readonly
+            chmod -R +x .terraform/* 
             terraform apply --auto-approve -input=false tfplan
             cd - # Go back to the root directory after each plan
           done
