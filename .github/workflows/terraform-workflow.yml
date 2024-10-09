@@ -35,19 +35,9 @@ jobs:
         dir_names: true
 
     - name: List all changed folders
-      # Find changed .tf files and extract the directories containing the changes
       env:
         ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-      #If no changed directories, exit the job
-        if [ -z "$ALL_CHANGED_FOLDERS" ]; then
-          echo "No relevant changes detected. Skipping Terraform plan."
-          exit 0
-        fi
-
-        #Pass the list of changed directories to the next step
-        echo "::set-output name=dirs::$changed_dirs"
-
         for file in ${ALL_CHANGED_FOLDERS}; do
           echo "$file was changed"
         done
@@ -58,7 +48,7 @@ jobs:
         ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
           #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          echo "Changed directories: ${dirs}"
+          echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
           # Loop over each changed directory and run terraform plan
           for dir in ${ALL_CHANGED_FOLDERS}; do
             echo "Running terraform plan in $dir"
