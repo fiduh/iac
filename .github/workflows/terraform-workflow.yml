@@ -33,6 +33,21 @@ jobs:
             - 'environments/**'
 
 
+    - name: Run changed-files with dir_names
+      id: changed-files
+      uses: tj-actions/changed-files@v45
+      # with:
+      #   dir_names: "true"
+
+    - name: List all changed files
+      env:
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      run: |
+        for file in ${ALL_CHANGED_FILES}; do
+          echo "$file was changed"
+        done
+
+
     - name: Find Changed Directories
       id: find-changes
       run: |
@@ -55,8 +70,8 @@ jobs:
 
     - name: Run Terraform Plan
       run: |
-          #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          echo "Changed directories: $CHANGED_FOLDERS"
+          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          echo "Changed directories: $changed_dirs"
           # Loop over each changed directory and run terraform plan
           for dir in $changed_dirs; do
             echo "Running terraform plan in $dir"
