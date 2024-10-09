@@ -72,7 +72,6 @@ jobs:
         include-hidden-files: true
         path: |
           environments/**/tfplan
-          environments/**/.terraform
           environments/**/.terraform.lock.hcl
             
 
@@ -113,6 +112,7 @@ jobs:
         ls -R
         echo "Folder Structure--------------------------------------------------------------"
         ls -LR
+        chmod -R +x .terraform/providers/registry.terraform.io/hashicorp/aws/
 
     - name: Run Terraform Apply
       env:
