@@ -89,12 +89,18 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - uses: actions/download-artifact@v4
-      with:
-        name: all-changed-folders
-        path: |
-          environments/**/tfplan
-          environments/**/.terraform
-          environments/**/.terraform.lock.hcl
+      # with:
+      #   name: all-changed-folders
+      #   path: |
+      #     environments/**/tfplan
+      #     environments/**/.terraform
+      #     environments/**/.terraform.lock.hcl
+
+    - name: Display structure of downloaded files
+      run: |
+        ls *
+        ls -R
+        ls -LR
 
     - name: Run Terraform Apply
       env:
@@ -103,7 +109,7 @@ jobs:
           echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
           # Loop over each changed directory and run terraform plan
           for dir in ${ALL_CHANGED_FOLDERS}; do
-            echo "Running terraform plan in $dir"
+            echo "Running terraform apply in $dir"
             cd $dir
             terraform apply -input=false tfplan
             cd - # Go back to the root directory after each plan
