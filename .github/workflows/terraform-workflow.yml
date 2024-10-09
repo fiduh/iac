@@ -59,7 +59,6 @@ jobs:
             terraform init
             terraform validate
             terraform plan -detailed-exitcode -out=tfplan
-            terraform apply --auto-approve -input=false "tfplan"
             cd - # Go back to the root directory after each plan
           done
 
