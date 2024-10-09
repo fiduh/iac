@@ -4,6 +4,9 @@ on: [push]  #event
 permissions:
   id-token: write # required for requesting the JWT 
 
+env:
+  CHANGED_FOLDERS: $(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+
 jobs:
   deploy-iac:
     runs-on: ubuntu-latest		 #Runner
@@ -28,17 +31,17 @@ jobs:
         filters: |
           environments:
             - 'environments/**'
-            
+
 
     - name: Find Changed Directories
       id: find-changes
       run: |
           # Find changed .tf files and extract the directories containing the changes
-          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
           #changed_dirs=$(git diff --name-only origin/main ${{ github.sha }} -- '*.tf' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
 
           #echo $changed_dirs
-          echo "Changed directories: $changed_dirs"
+          echo "Changed directories: $CHANGED_FOLDERS"
 
           # If no changed directories, exit the job
           #if [ -z "$changed_dirs" ]; then
@@ -52,8 +55,8 @@ jobs:
 
     - name: Run Terraform Plan
       run: |
-          changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          echo "Changed directories: $changed_dirs"
+          #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
+          echo "Changed directories: $CHANGED_FOLDERS"
           # Loop over each changed directory and run terraform plan
           for dir in $changed_dirs; do
             echo "Running terraform plan in $dir"
