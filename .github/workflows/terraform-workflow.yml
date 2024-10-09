@@ -65,6 +65,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: all-changed-folders
+        include-hidden-files: true
         path: |
           environments/**/tfplan
           environments/**/.terraform
