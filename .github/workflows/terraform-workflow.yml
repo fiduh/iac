@@ -123,7 +123,7 @@ jobs:
           for dir in ${ALL_CHANGED_FOLDERS}; do
             echo "Running terraform apply in $dir"
             cd $dir
-            terraform apply --auto-approve -input=false --tfplan
+            terraform apply --auto-approve -input=false tfplan
             cd - # Go back to the root directory after each plan
           done
 
