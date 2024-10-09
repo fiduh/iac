@@ -9,7 +9,7 @@ env:
   CHANGED_FOLDERS: $(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
 
 jobs:
-  deploy-iac:
+  test-iac:
     runs-on: ubuntu-latest		 #Runner
     steps:
     - name: Checkout Repo
@@ -67,7 +67,34 @@ jobs:
         name: all-changed-folders
         path: |
           environments/**/tfplan
+          environments/**/.terraform
+          environments/**/.terraform.lock.hcl
             
 
 
+  deploy-iac:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: all-changed-folders
+        path: |
+          environments/**/tfplan
+          environments/**/.terraform
+          environments/**/.terraform.lock.hcl
+
+    - name: Run Terraform Apply
+      run: echo "Terraform apply"
 
