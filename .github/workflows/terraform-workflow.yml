@@ -89,6 +89,9 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - uses: actions/download-artifact@v4
+      with:
+        path: environments/
+        merge-multiple: true
       # with:
       #   name: all-changed-folders
       #   path: |
@@ -99,7 +102,9 @@ jobs:
     - name: Display structure of downloaded files
       run: |
         ls *
+        echo "Folder Structure--------------------------------------------------------------"
         ls -R
+        echo "Folder Structure--------------------------------------------------------------"
         ls -LR
 
     - name: Run Terraform Apply
