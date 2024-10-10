@@ -32,25 +32,25 @@ jobs:
         #dir_names_include_files_separator: ','
     
     - name: Generate Matrix Data
-        id: generate-matrix
-        run: |
-          MATRIX_ENTRIES=()
-          CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
-          
-          # Loop through the changed folders and build matrix entries
-          for folder in $CHANGED_FOLDERS; do
-            ENV_NAME=$(basename $(dirname $folder)) # Extract the environment name from the path
-            MATRIX_ENTRIES+=("{\"path\":\"$folder\",\"environment\":\"$ENV_NAME\"}")
-          done
+      id: generate-matrix
+      run: |
+        MATRIX_ENTRIES=()
+        CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
+        
+        # Loop through the changed folders and build matrix entries
+        for folder in $CHANGED_FOLDERS; do
+          ENV_NAME=$(basename $(dirname $folder)) # Extract the environment name from the path
+          MATRIX_ENTRIES+=("{\"path\":\"$folder\",\"environment\":\"$ENV_NAME\"}")
+        done
 
-          # Create a JSON array from the matrix entries
-          MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
-          MATRIX_JSON="[${MATRIX_JSON:1}]"
-          echo "Generated matrix data: $MATRIX_JSON"
-          echo "::set-output name=matrix-data::$MATRIX_JSON"
+        # Create a JSON array from the matrix entries
+        MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
+        MATRIX_JSON="[${MATRIX_JSON:1}]"
+        echo "Generated matrix data: $MATRIX_JSON"
+        echo "::set-output name=matrix-data::$MATRIX_JSON"
       
-      - name: Debug Matrix Data
-        run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
+    - name: Debug Matrix Data
+      run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
 
     - name: List all changed folders
       env:
