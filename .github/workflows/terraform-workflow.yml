@@ -42,7 +42,7 @@ jobs:
     needs: [detect-changes]
     strategy:
       matrix:
-        changed_paths: ${{ fromJson(needs.detect-changes.outputs.all-changes) }}
+        changed_paths: ${{ needs.detect-changes.outputs.all-changes }}
     #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
