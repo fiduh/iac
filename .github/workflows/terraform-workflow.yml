@@ -44,13 +44,17 @@ jobs:
     needs: [detect-changes]
     strategy:
       matrix:
-        changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
-        env_names: [stage, production]
+        #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
+        config:
+          - path: "environment/staging/ec2"
+            environment: "staging"
+          - path: "environment/production/ec2"
+            environment: "production"
     #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest		 #Runner
-    environment: ${{ matrix.env_names }}
+    environment: ${{ matrix.config.environment }}
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -68,8 +72,8 @@ jobs:
 
     - name: List Matrix Values
       run: |
-        echo "Matrix Changed Paths Values: ${{ matrix.changed_paths }}"
-        echo "Matrix Environment Values: ${{ matrix.env_names }}"
+        echo "Matrix Changed Paths Values: ${{ matrix.config.path }}"
+        echo "Matrix Environment Values: ${{ matrix.config.environment }}"
 
     - name: Run Terraform Plan
       env:
@@ -77,7 +81,7 @@ jobs:
       run: |
           #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
           echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
-          cd ${{ matrix.changed_paths }}
+          cd ${{ matrix.config.path }}
           terraform init
           terraform validate
           terraform plan -detailed-exitcode -out=tfplan
@@ -102,9 +106,9 @@ jobs:
         include-hidden-files: true
         #retention-days: 5
         path: |
-          ${{ matrix.changed_paths }}/tfplan
-          ${{ matrix.changed_paths }}/.terraform
-          ${{ matrix.changed_paths }}/.terraform.lock.hcl
+          ${{ matrix.config.path  }}/tfplan
+          ${{ matrix.config.path  }}/.terraform
+          ${{ matrix.config.path  }}/.terraform.lock.hcl
             
 
 
