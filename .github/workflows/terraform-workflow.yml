@@ -16,13 +16,8 @@ jobs:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest		 #Runner
-    strategy:
-      matrix:
-        changed_paths: ${{ fromJson(steps.changed-files.outputs.all_changed_files) }}
-        #env_names:
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
-      
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -56,9 +51,6 @@ jobs:
           echo "$file was changed"
         done
 
-    - name: List all Matrix variables
-      run: |
-        echo "Matrix variable: ${{ matrix.changed_paths }}"
 
     - name: Run Terraform Plan
       env:
