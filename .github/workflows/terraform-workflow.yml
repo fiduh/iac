@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest		 #Runner
     strategy:
       matrix:
-        changed_paths: ${{ steps.changed-files.outputs.all_changed_files }}
+        changed_paths: ${{ fromJson(steps.changed-files.outputs.all_changed_files) }}
         #env_names:
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
