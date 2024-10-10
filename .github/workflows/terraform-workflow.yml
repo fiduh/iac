@@ -71,7 +71,7 @@ jobs:
     needs: [detect-changes]
     strategy:
       matrix:
-        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data || '[]') }}
+        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
         #   - path: "environments/staging/ec2"
