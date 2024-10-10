@@ -1,8 +1,8 @@
 name:  Terraform Workflow   					#workflow
-on:                                   #event
-  push:
-  pull_request: 
-  workflow_dispatch:  
+on:                                   
+  push: {}
+  pull_request: {}
+  workflow_dispatch : {}
 
 permissions:
   id-token: write # required for requesting the JWT 
