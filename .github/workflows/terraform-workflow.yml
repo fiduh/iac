@@ -35,13 +35,13 @@ jobs:
       id: generate-matrix
       run: |
         MATRIX_ENTRIES=()
-        # Check the output of changed files
-        echo "Changed files output: ${{ steps.changed-files.outputs.all_changed_files }}"
         
-        # Convert the list of changed files from a comma-separated string to an array
-        IFS=',' read -r -a CHANGED_FOLDERS <<< "${{ steps.changed-files.outputs.all_changed_files }}"
+        # Remove square brackets from the list of changed files and split into an array
+        CLEANED_CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}" 
+        CLEANED_CHANGED_FOLDERS="${CLEANED_CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
+        IFS=',' read -r -a CHANGED_FOLDERS <<< "$CLEANED_CHANGED_FOLDERS"
         
-        # Loop through the changed folders and build matrix entries
+        # Loop through the cleaned folders and build matrix entries
         for folder in "${CHANGED_FOLDERS[@]}"; do
           echo "Processing folder: $folder" # Debugging line to see each folder
           ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
@@ -53,6 +53,7 @@ jobs:
         MATRIX_JSON="[${MATRIX_JSON:1}]" # Remove the leading comma and wrap in square brackets
         echo "Generated matrix data: $MATRIX_JSON" # Debugging line to check the JSON format
         echo "::set-output name=matrix-data::$MATRIX_JSON"
+
       
     - name: Debug Matrix Data
       run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
