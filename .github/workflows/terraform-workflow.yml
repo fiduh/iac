@@ -35,11 +35,15 @@ jobs:
       id: generate-matrix
       run: |
         MATRIX_ENTRIES=()
+        # Check the output of changed files
+        echo "Changed files output: ${{ steps.changed-files.outputs.all_changed_files }}"
+        
         # Convert the list of changed files from a comma-separated string to an array
         IFS=',' read -r -a CHANGED_FOLDERS <<< "${{ steps.changed-files.outputs.all_changed_files }}"
-
+        
         # Loop through the changed folders and build matrix entries
         for folder in "${CHANGED_FOLDERS[@]}"; do
+          echo "Processing folder: $folder" # Debugging line to see each folder
           ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
           MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
         done
@@ -47,7 +51,7 @@ jobs:
         # Join all entries into a JSON array
         MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
         MATRIX_JSON="[${MATRIX_JSON:1}]" # Remove the leading comma and wrap in square brackets
-        echo "Generated matrix data: $MATRIX_JSON"
+        echo "Generated matrix data: $MATRIX_JSON" # Debugging line to check the JSON format
         echo "::set-output name=matrix-data::$MATRIX_JSON"
       
     - name: Debug Matrix Data
@@ -66,7 +70,7 @@ jobs:
     needs: [detect-changes]
     strategy:
       matrix:
-        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
+        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data || '[]') }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
         #   - path: "environments/staging/ec2"
