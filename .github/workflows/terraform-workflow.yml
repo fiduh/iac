@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   test-terraform-iac:
-    if: always()
+    #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
+    #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest		 #Runner
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
