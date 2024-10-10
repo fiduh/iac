@@ -40,6 +40,9 @@ jobs:
 
   test-terraform-iac:
     needs: [detect-changes]
+    strategy:
+      matrix:
+        changed_paths: ${{ fromJson(needs.detect-changes.outputs.all-changes) }}
     #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
@@ -60,6 +63,9 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    - name: List Matrix Values
+      run: |
+        echo "Matrix Values: ${{ matrix.changed_paths }}"
 
     - name: Run Terraform Plan
       env:
