@@ -11,29 +11,15 @@ permissions:
 
 
 jobs:
-  test-terraform-iac:
-    #if: always()
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
+  detect-changes:
     runs-on: ubuntu-latest		 #Runner
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
+    
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
     
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: "1.9.7"
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-
     - name: Run changed-files with dir_names
       id: changed-files
       uses: tj-actions/changed-files@v45
@@ -52,9 +38,32 @@ jobs:
         done
 
 
+  test-terraform-iac:
+    needs: [detect-changes]
+    #if: always()
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
+    runs-on: ubuntu-latest		 #Runner
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.9.7"
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+
     - name: Run Terraform Plan
       env:
-        ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
+        ALL_CHANGED_FOLDERS: ${{ needs.detect-changes.outputs.all-changes }}
       run: |
           #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
           echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
@@ -123,7 +132,7 @@ jobs:
 
     - name: Run Terraform Apply
       env:
-        ALL_CHANGED_FOLDERS: ${{ needs.test-iac.outputs.all-changes }}
+        ALL_CHANGED_FOLDERS: ${{ needs.detect-changes.outputs.all-changes }}
       run: |
           echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
           # Loop over each changed directory and run terraform plan
