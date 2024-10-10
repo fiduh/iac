@@ -100,9 +100,9 @@ jobs:
         include-hidden-files: true
         retention-days: 5
         path: |
-          environments/**/tfplan
-          environments/**/.terraform
-          environments/**/.terraform.lock.hcl
+          ${{ matrix.changed_paths }}/tfplan
+          ${{ matrix.changed_paths }}/.terraform
+          ${{ matrix.changed_paths }}/.terraform.lock.hcl
             
 
 
