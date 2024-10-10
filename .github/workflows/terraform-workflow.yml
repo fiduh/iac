@@ -45,11 +45,12 @@ jobs:
     strategy:
       matrix:
         changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
+        env_names: [stage, production]
     #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest		 #Runner
-
+    environment: ${{ matrix.env_names }}
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -67,7 +68,8 @@ jobs:
 
     - name: List Matrix Values
       run: |
-        echo "Matrix Values: ${{ matrix.changed_paths }}"
+        echo "Matrix Changed Paths Values: ${{ matrix.changed_paths }}"
+        echo "Matrix Environment Values: ${{ matrix.env_names }}"
 
     - name: Run Terraform Plan
       env:
