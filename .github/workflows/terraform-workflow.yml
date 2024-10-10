@@ -1,5 +1,8 @@
 name:  Terraform Workflow   					#workflow
-on: [push]  #event
+on:                                   #event
+  push:
+  pull_request: 
+  workflow_dispatch:  
 
 permissions:
   id-token: write # required for requesting the JWT 
@@ -8,9 +11,10 @@ permissions:
 
 
 jobs:
-  test-iac:
+  test-terraform-iac:
+    if: always
     if: ${{ github.event_name == 'pull_request' || github.event_name == "push" }}
-    if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
+    #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest		 #Runner
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
@@ -71,6 +75,7 @@ jobs:
       with:
         name: all-changed-folders
         include-hidden-files: true
+        retention-days: 5
         path: |
           environments/**/tfplan
           environments/**/.terraform
@@ -78,9 +83,9 @@ jobs:
             
 
 
-  deploy-iac:
-    if: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || 'value_for_other_branches' }}
-    needs: [test-iac]
+  deploy-terraform-iac:
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'pull_request' }}
+    needs: [test-terraform-iac]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repo
