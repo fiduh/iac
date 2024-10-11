@@ -31,23 +31,30 @@ jobs:
         matrix: true
         #dir_names_include_files_separator: ','
     
-    - name: Generate Matrix Data
+    - name: Generate Environment Steps
       id: generate-matrix
       run: |
-        MATRIX_ENTRIES=()
-          CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
-          
-          # Loop through the changed folders and build matrix entries
-          for folder in $CHANGED_FOLDERS; do
-            ENV_NAME=$(basename $(dirname $folder)) # Extract the environment name from the path
-            MATRIX_ENTRIES+=("{\"path\":\"$folder\",\"environment\":\"$ENV_NAME\"}")
-          done
+        CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
+        echo "Raw changed files output: $CHANGED_FOLDERS"  # Debugging line to see raw output
 
-          # Convert the array to a JSON array format
-          MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
-          MATRIX_JSON="[${MATRIX_JSON:1}]"
-          echo "Generated matrix data: $MATRIX_JSON"
-          echo "::set-output name=matrix-data::$MATRIX_JSON"
+        # Remove square brackets from the list of changed files and split into an array
+        CLEANED_CHANGED_FOLDERS="${CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
+        IFS=',' read -r -a CHANGED_FOLDERS <<< "$CLEANED_CHANGED_FOLDERS"
+
+        # Loop through the cleaned folders and build steps for each environment
+        STEPS=""
+        for folder in "${CHANGED_FOLDERS[@]}"; do
+          folder=$(echo "$folder" | xargs) # Trim whitespace
+          if [[ -n "$folder" ]]; then  # Check if folder is not empty
+            ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
+            STEPS+="env: $ENV_NAME, path: $folder\n"
+            echo "Found environment: $ENV_NAME in path: $folder" # Debugging line
+          fi
+        done
+
+        # Set the output for subsequent steps
+        echo "Generated steps:\n$STEPS"
+        echo "::set-output name=matrix-data::$STEPS"
       
     - name: Debug Matrix Data
       run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
