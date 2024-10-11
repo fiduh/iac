@@ -31,9 +31,12 @@ jobs:
         matrix: true
         #dir_names_include_files_separator: ','
     
-    - name: Generate Environment Steps
+    - name: Generate Matrix Data
       id: generate-matrix
       run: |
+        MATRIX_ENTRIES=()
+
+        # Get the output of changed files
         CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
         echo "Raw changed files output: $CHANGED_FOLDERS"  # Debugging line to see raw output
 
@@ -41,20 +44,23 @@ jobs:
         CLEANED_CHANGED_FOLDERS="${CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
         IFS=',' read -r -a CHANGED_FOLDERS <<< "$CLEANED_CHANGED_FOLDERS"
 
-        # Loop through the cleaned folders and build steps for each environment
-        STEPS=""
+        # Loop through the cleaned folders and build matrix entries
         for folder in "${CHANGED_FOLDERS[@]}"; do
           folder=$(echo "$folder" | xargs) # Trim whitespace
+          echo "Processing folder: $folder" # Debugging line to see each folder
           if [[ -n "$folder" ]]; then  # Check if folder is not empty
             ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
-            STEPS+="env: $ENV_NAME, path: $folder\n"
-            echo "Found environment: $ENV_NAME in path: $folder" # Debugging line
+            MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
           fi
         done
 
-        # Set the output for subsequent steps
-        echo "Generated steps:\n$STEPS"
-        echo "::set-output name=matrix-data::$STEPS"
+        # Join all entries into a JSON array with the config key
+        MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
+        MATRIX_JSON="{\"config\":[${MATRIX_JSON:1}]}" # Wrap in square brackets under the config key
+        echo "Generated matrix data: $MATRIX_JSON" # Debugging line to check the JSON format
+        
+        # Set output
+        echo "::set-output name=matrix-data::$MATRIX_JSON"
       
     - name: Debug Matrix Data
       run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
@@ -71,8 +77,7 @@ jobs:
   test-terraform-iac:
     needs: [detect-changes]
     strategy:
-      matrix:
-        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
         #   - path: "environments/staging/ec2"
@@ -109,7 +114,7 @@ jobs:
         ALL_CHANGED_FOLDERS: ${{ needs.detect-changes.outputs.all-changes }}
       run: |
           #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
-          echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
+          echo "Running terraform plan for environment: ${{ matrix.config.environment }} in path: ${{ matrix.config.path }}"
           cd ${{ matrix.config.path }}
           terraform init
           terraform validate
