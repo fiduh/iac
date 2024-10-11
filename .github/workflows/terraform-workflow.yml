@@ -100,7 +100,7 @@ jobs:
   test-terraform-iac:
     needs: [detect-changes]
     strategy:
-      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data-test) }}
       #matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
