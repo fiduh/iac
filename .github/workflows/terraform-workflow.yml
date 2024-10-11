@@ -72,12 +72,13 @@ jobs:
     needs: [detect-changes]
     strategy:
       matrix:
+        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
-        config:
-          - path: "environments/staging/ec2"
-            environment: "staging"
-          - path: "environments/production/ec2"
-            environment: "production"
+        # config:
+        #   - path: "environments/staging/ec2"
+        #     environment: "staging"
+        #   - path: "environments/production/ec2"
+        #     environment: "production"
     #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
