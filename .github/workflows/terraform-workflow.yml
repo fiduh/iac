@@ -75,7 +75,7 @@ jobs:
     - name: Generate Matrix
       id: create-matrix
       run: |
-        MATRIX="${{ steps.generate-matrix.outputs.matrix-data }}"
+        MATRIX=${{ steps.generate-matrix.outputs.matrix-data }}
         #MATRIX='{"config":[{"path":"environments/production/ec2","environment":"production"},{"path":"environments/staging/ec2","environment":"staging"}]}'
         echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
