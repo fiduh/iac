@@ -78,7 +78,7 @@ jobs:
   test-terraform-iac:
     needs: [detect-changes]
     strategy:
-      matrix: ${{ fromJson(needs.detect-changes.outputs['generate-matrix'].outputs['matrix-data']).config }}
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix-data).config }}
       #matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
@@ -108,8 +108,9 @@ jobs:
 
     - name: List Matrix Values
       run: |
-        echo "Matrix Changed Paths Values: ${{ matrix.config.path }}"
-        echo "Matrix Environment Values: ${{ matrix.config.environment }}"
+          echo "Running tests for path: ${{ matrix.path }} in environment: ${{ matrix.environment }}"
+        # echo "Matrix Changed Paths Values: ${{ matrix.config.path }}"
+        # echo "Matrix Environment Values: ${{ matrix.config.environment }}"
 
     - name: Run Terraform Plan
       env:
