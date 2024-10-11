@@ -34,33 +34,18 @@ jobs:
     - name: Generate Matrix Data
       id: generate-matrix
       run: |
-        MATRIX_ENTRIES=()
-
         # Get the output of changed files
         CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
         echo "Raw changed files output: $CHANGED_FOLDERS"  # Debugging line to see raw output
 
-        # Remove square brackets from the list of changed files and split into an array
-        CLEANED_CHANGED_FOLDERS="${CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
-        IFS=',' read -r -a CHANGED_FOLDERS <<< "$CLEANED_CHANGED_FOLDERS"
-
-        # Loop through the cleaned folders and build matrix entries
-        for folder in "${CHANGED_FOLDERS[@]}"; do
-          folder=$(echo "$folder" | xargs) # Trim whitespace
-          echo "Processing folder: $folder" # Debugging line to see each folder
-          if [[ -n "$folder" ]]; then  # Check if folder is not empty
-            ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
-            MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
-          fi
-        done
-
-        # Join all entries into a JSON array
-        MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
-        MATRIX_JSON="[${MATRIX_JSON:1}]" # Remove the leading comma and wrap in square brackets
-        echo "Generated matrix data: $MATRIX_JSON" # Debugging line to check the JSON format
+        # Process the changed folders to build a JSON array for the matrix
+        MATRIX_JSON=$(echo "$CHANGED_FOLDERS" | tr -d '[]' | tr ',' '\n' | awk -F/ 'NF>=3 { printf("{\"path\": \"%s\", \"environment\": \"%s\"},\n", $0, $(NF-1)) }' | sed '$ s/,$//') 
+        MATRIX_JSON="[$MATRIX_JSON]" # Wrap the output in square brackets
         
+        echo "Generated matrix data: $MATRIX_JSON" # Debugging line to check the JSON format
+
         # Set output
-        echo "::set-output name=matrix-data::$MATRIX_JSON"
+        echo "matrix-data=$MATRIX_JSON" >> $GITHUB_ENV
 
 
 
@@ -81,7 +66,7 @@ jobs:
     needs: [detect-changes]
     strategy:
       matrix:
-        config: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
+        config: ${{ fromJson(env.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
         #   - path: "environments/staging/ec2"
@@ -111,7 +96,7 @@ jobs:
     - name: List Matrix Values
       run: |
         echo "Matrix Changed Paths Values: ${{ matrix.config.path }}"
-        echo "Matrix Environment Values: ${{ matrix.config.environment }}"
+        echo "Matrix Environment Values: ${{ toJson(matrix.config) }}"
 
     - name: Run Terraform Plan
       env:
