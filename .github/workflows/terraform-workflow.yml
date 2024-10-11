@@ -32,11 +32,7 @@ jobs:
         matrix: true
         #dir_names_include_files_separator: ','
     
-    - name: Generate Matrix
-      id: create-matrix
-      run: |
-        MATRIX='{"config":[{"path":"environments/production/ec2","environment":"production"},{"path":"environments/staging/ec2","environment":"staging"}]}'
-        echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+    
     
     - name: Generate Matrix Data
       id: generate-matrix
@@ -76,6 +72,13 @@ jobs:
     - name: Debug Matrix Data
       run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
 
+    - name: Generate Matrix
+      id: create-matrix
+      run: |
+        MATRIX= ${{ steps.generate-matrix.outputs.matrix-data }}
+        #MATRIX='{"config":[{"path":"environments/production/ec2","environment":"production"},{"path":"environments/staging/ec2","environment":"staging"}]}'
+        echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
     - name: List all changed folders
       env:
         ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
@@ -97,7 +100,7 @@ jobs:
   test-terraform-iac:
     needs: [detect-changes]
     strategy:
-      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data-test) }}
       #matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
         # config:
