@@ -38,7 +38,7 @@ jobs:
 
         # Get the output of changed files
         CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
-        echo "Raw changed files output: $CHANGED_FOLDERS"  # Debugging line to see raw output
+        echo "Raw changed files output: $CHANGED_FOLDERS"
 
         # Remove square brackets from the list of changed files and split into an array
         CLEANED_CHANGED_FOLDERS="${CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
@@ -47,20 +47,21 @@ jobs:
         # Loop through the cleaned folders and build matrix entries
         for folder in "${CHANGED_FOLDERS[@]}"; do
           folder=$(echo "$folder" | xargs) # Trim whitespace
-          echo "Processing folder: $folder" # Debugging line to see each folder
-          if [[ -n "$folder" ]]; then  # Check if folder is not empty
-            ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
+          echo "Processing folder: $folder"
+          if [[ -n "$folder" ]]; then
+            ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name
             MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
           fi
         done
 
         # Join all entries into a JSON array with the config key
         MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
-        MATRIX_JSON="{\"config\":[${MATRIX_JSON:1}]}" # Wrap in square brackets under the config key
-        echo "Generated matrix data: $MATRIX_JSON" # Debugging line to check the JSON format
+        MATRIX_JSON="{\"config\":[${MATRIX_JSON:1}]}"
+        echo "Generated matrix data: $MATRIX_JSON"
         
         # Set output
         echo "::set-output name=matrix-data::$MATRIX_JSON"
+
       
     - name: Debug Matrix Data
       run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
