@@ -56,7 +56,7 @@ jobs:
           folder=$(echo "$folder" | xargs) # Trim whitespace
           if [[ -n "$folder" ]]; then
             ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name from the path
-            MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
+            MATRIX_ENTRIES+=("{\"path\":\"$folder\",\"environment\":\"$ENV_NAME\"}")
           fi
         done
 
@@ -64,7 +64,7 @@ jobs:
         MATRIX_JSON="[${MATRIX_ENTRIES[*]}]"
         echo "Generated matrix data: $MATRIX_JSON"
 
-        # Set output for the matrix data
+        # Set output for the matrix data in the exact format required
         echo "::set-output name=matrix-data::{\"config\":$MATRIX_JSON}"
 
       
