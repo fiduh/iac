@@ -63,10 +63,14 @@ jobs:
         # Join all entries into a JSON array and wrap it in a 'config' object
         MATRIX_JSON=$(IFS=, ; echo "${MATRIX_ENTRIES[*]}")
         MATRIX_JSON="{\"config\":[${MATRIX_JSON}]}"
-        echo "Generated matrix data: $MATRIX_JSON" # Debugging output
+        
+        # Wrap the whole JSON string with single quotes
+        FINAL_OUTPUT="'${MATRIX_JSON}'"
+        
+        echo "Generated matrix data: $FINAL_OUTPUT" # Debugging output
 
         # Set output for the matrix data in the exact format required
-        echo "::set-output name=matrix-data::$MATRIX_JSON"
+        echo "::set-output name=matrix-data::$FINAL_OUTPUT"
 
       
     - name: Debug Matrix Data
