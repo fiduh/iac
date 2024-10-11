@@ -66,7 +66,7 @@ jobs:
         echo "Generated matrix data: $FINAL_OUTPUT" # Debugging output
 
         # Set output for the matrix data in the exact format required
-        echo "::set-output name=matrix-data::$FINAL_OUTPUT"
+        echo "matrix-data=$FINAL_OUTPUT" >> $GITHUB_OUTPUT
 
       
     - name: Debug Matrix Data
@@ -75,7 +75,8 @@ jobs:
     - name: Generate Matrix
       id: create-matrix
       run: |
-        MATRIX= ${{ steps.generate-matrix.outputs.matrix-data }}
+        MATRIX="${{ steps.generate-matrix.outputs.matrix-data }}"
+        #MATRIX='{"config":[{"path":"environments/production/ec2","environment":"production"},{"path":"environments/staging/ec2","environment":"staging"}]}'
         echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
     - name: List all changed folders
