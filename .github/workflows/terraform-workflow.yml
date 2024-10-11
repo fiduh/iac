@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest		 #Runner
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
+      matrix-data: ${{ steps.create-matrix.outputs.matrix }}
     
     steps:
     - name: Checkout Repo
@@ -31,50 +32,64 @@ jobs:
         matrix: true
         #dir_names_include_files_separator: ','
     
-    - name: Generate Matrix Data
-      id: generate-matrix
+    - name: Generate Matrix
+      id: create-matrix
       run: |
-        MATRIX_ENTRIES=()
+        MATRIX='{"config":[{"path":"environments/production/ec2","environment":"production"},{"path":"environments/staging/ec2","environment":"staging"}]}'
+        echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+    
+    # - name: Generate Matrix Data
+    #   id: generate-matrix
+    #   run: |
+    #     MATRIX_ENTRIES=()
 
-        # Get the output of changed files
-        CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
-        echo "Raw changed files output: $CHANGED_FOLDERS"
+    #     # Get the output of changed files
+    #     CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
+    #     echo "Raw changed files output: $CHANGED_FOLDERS"
 
-        # Remove square brackets from the list of changed files and split into an array
-        CLEANED_CHANGED_FOLDERS="${CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
-        IFS=',' read -r -a CHANGED_FOLDERS <<< "$CLEANED_CHANGED_FOLDERS"
+    #     # Remove square brackets from the list of changed files and split into an array
+    #     CLEANED_CHANGED_FOLDERS="${CHANGED_FOLDERS//[\[\]]/}" # Remove square brackets
+    #     IFS=',' read -r -a CHANGED_FOLDERS <<< "$CLEANED_CHANGED_FOLDERS"
 
-        # Loop through the cleaned folders and build matrix entries
-        for folder in "${CHANGED_FOLDERS[@]}"; do
-          folder=$(echo "$folder" | xargs) # Trim whitespace
-          echo "Processing folder: $folder"
-          if [[ -n "$folder" ]]; then
-            ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name
-            MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
-          fi
-        done
+    #     # Loop through the cleaned folders and build matrix entries
+    #     for folder in "${CHANGED_FOLDERS[@]}"; do
+    #       folder=$(echo "$folder" | xargs) # Trim whitespace
+    #       echo "Processing folder: $folder"
+    #       if [[ -n "$folder" ]]; then
+    #         ENV_NAME=$(basename "$(dirname "$folder")") # Extract the environment name
+    #         MATRIX_ENTRIES+=("{\"path\": \"$folder\", \"environment\": \"$ENV_NAME\"}")
+    #       fi
+    #     done
 
-        # Join all entries into a JSON array with the config key
-        MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
-        MATRIX_JSON="{\"config\":[${MATRIX_JSON:1}]}"
-        echo "Generated matrix data: $MATRIX_JSON"
+    #     # Join all entries into a JSON array with the config key
+    #     MATRIX_JSON=$(printf ",%s" "${MATRIX_ENTRIES[@]}")
+    #     MATRIX_JSON="{\"config\":[${MATRIX_JSON:1}]}"
+    #     echo "Generated matrix data: $MATRIX_JSON"
         
-        # Set output
-        echo "::set-output name=matrix-data::$MATRIX_JSON"
+    #     # Set output
+    #     echo "::set-output name=matrix-data::$MATRIX_JSON"
 
       
-    - name: Debug Matrix Data
-      run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
+    # - name: Debug Matrix Data
+    #   run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
 
-    - name: List all changed folders
-      env:
-        ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
-      run: |
-        for file in ${ALL_CHANGED_FOLDERS}; do
-          echo "$file was changed"
-        done
+    # - name: List all changed folders
+    #   env:
+    #     ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
+    #   run: |
+    #     for file in ${ALL_CHANGED_FOLDERS}; do
+    #       echo "$file was changed"
+    #     done
 
-
+  test-matrix:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data).config }}
+    steps:
+      - name: Run tests
+        run: echo "Running tests for path: ${{ matrix.path }} in environment: ${{ matrix.environment }}"
+  
   test-terraform-iac:
     needs: [detect-changes]
     strategy:
