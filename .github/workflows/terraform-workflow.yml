@@ -85,11 +85,11 @@ jobs:
     needs: detect-changes
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data).config }}
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
     steps:
     - name: Run tests
       run: |
-        echo "Running tests for path: ${{ matrix.path }} in environment: ${{ matrix.environment }}"
+        echo "Running tests for path: ${{ matrix.config.path }} in environment: ${{ matrix.config.environment }}"
   
   test-terraform-iac:
     needs: [detect-changes]
