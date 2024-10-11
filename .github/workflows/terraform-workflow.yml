@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest		 #Runner
     outputs:
       all-changes: ${{ steps.changed-files.outputs.all_changed_files }}
-      matrix-data-test: ${{ steps.create-matrix.outputs.matrix }}
+      matrix-input-data: ${{ steps.create-matrix.outputs.matrix }}
     
     steps:
     - name: Checkout Repo
@@ -30,12 +30,11 @@ jobs:
             environments/**.tf
         dir_names: true
         matrix: true
-        #dir_names_include_files_separator: ','
     
     
     
-    - name: Generate Matrix Data
-      id: generate-matrix
+    - name: Detect Changes
+      id: detect-changes
       run: |
         MATRIX_ENTRIES=()
 
@@ -70,12 +69,12 @@ jobs:
 
       
     - name: Debug Matrix Data
-      run: echo "${{ steps.generate-matrix.outputs.matrix-data }}"
+      run: echo "${{ steps.detect-changes.outputs.matrix-data }}"
 
     - name: Generate Matrix
       id: create-matrix
       run: |
-        MATRIX=${{ steps.generate-matrix.outputs.matrix-data }}
+        MATRIX=${{ steps.detect-changes.outputs.matrix-data }}
         #MATRIX='{"config":[{"path":"environments/production/ec2","environment":"production"},{"path":"environments/staging/ec2","environment":"staging"}]}'
         echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
@@ -87,27 +86,12 @@ jobs:
           echo "$file was changed"
         done
 
-  test-matrix:
-    needs: detect-changes
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data-test) }}
-    steps:
-    - name: Run tests
-      run: |
-        echo "Running tests for path: ${{ matrix.config.path }} in environment: ${{ matrix.config.environment }}"
   
   test-terraform-iac:
     needs: [detect-changes]
     strategy:
-      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data-test) }}
-      #matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-data) }}
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-input-data) }}
         #changed_paths: ${{ fromJSON(needs.detect-changes.outputs.all-changes) }}
-        # config:
-        #   - path: "environments/staging/ec2"
-        #     environment: "staging"
-        #   - path: "environments/production/ec2"
-        #     environment: "production"
     #if: always()
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     #if: contains(fromJSON('["push", "pull_request"]'), github.event_name)
@@ -128,15 +112,8 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: List Matrix Values
-      run: |
-          echo "Running tests for path: ${{ matrix.config.path }} in environment: ${{ matrix.config.environment }}"
-        # echo "Matrix Changed Paths Values: ${{ matrix.config.path }}"
-        # echo "Matrix Environment Values: ${{ matrix.config.environment }}"
 
     - name: Run Terraform Plan
-      env:
-        ALL_CHANGED_FOLDERS: ${{ needs.detect-changes.outputs.all-changes }}
       run: |
           #changed_dirs=$(git diff --name-only ${{ github.event.after }} ${{ github.event.before }} | grep '\.tf$' | grep 'environments/' | cut -d'/' -f1-3 | sort -u)
           echo "Running terraform plan for environment: ${{ matrix.config.environment }} in path: ${{ matrix.config.path }}"
@@ -146,19 +123,8 @@ jobs:
           terraform plan -detailed-exitcode -out=tfplan
           cd - # Go back to the root directory after each plan
 
-          # Loop over each changed directory and run terraform plan
-          #for dir in ${ALL_CHANGED_FOLDERS}; do
-            #echo "Running terraform plan in $dir"
-            #cd $dir
-            #terraform init
-            #terraform validate
-            #terraform plan -detailed-exitcode -out=tfplan
-            #cd - # Go back to the root directory after each plan
-          #done
 
     - name: uplaod tfplan files artifacts
-      #env:
-        #ALL_CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_changed_files }}
       uses: actions/upload-artifact@v4
       with:
         name: all-changed-folders-${{ strategy.job-index }}
@@ -172,9 +138,12 @@ jobs:
 
 
   deploy-terraform-iac:
+    needs: [detect-changes, test-terraform-iac]
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'pull_request' }}
-    needs: [test-terraform-iac]
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix-input-data) }}
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -194,32 +163,14 @@ jobs:
       with:
         path: environments/
         merge-multiple: true
-      # with:
-      #   name: all-changed-folders
-      #   path: |
-      #     environments/**/tfplan
-      #     environments/**/.terraform
-      #     environments/**/.terraform.lock.hcl
 
-    - name: Display structure of downloaded files
-      run: |
-        ls *
-        echo "Folder Structure--------------------------------------------------------------"
-        ls -R
-        echo "Folder Structure--------------------------------------------------------------"
-        ls -LR
 
     - name: Run Terraform Apply
-      env:
-        ALL_CHANGED_FOLDERS: ${{ needs.detect-changes.outputs.all-changes }}
       run: |
-          echo "Changed directories: ${ALL_CHANGED_FOLDERS}"
-          # Loop over each changed directory and run terraform plan
-          for dir in ${ALL_CHANGED_FOLDERS}; do
-            echo "Running terraform apply in $dir"
-            cd $dir
-            chmod -R +x .terraform/* 
-            terraform apply --auto-approve -input=false tfplan
-            cd - # Go back to the root directory after each plan
-          done
+          echo "Running terraform apply for environment: ${{ matrix.config.environment }} in path: ${{ matrix.config.path }}"
+          cd ${{ matrix.config.path }}
+          chmod -R +x .terraform/* 
+          terraform apply --auto-approve -input=false tfplan
+          cd - # Go back to the root directory after each plan
+
 
